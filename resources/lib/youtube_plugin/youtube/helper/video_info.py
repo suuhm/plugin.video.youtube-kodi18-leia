@@ -739,10 +739,28 @@ class VideoInfo(object):
         #                                   'clientName': 'ANDROID', 'clientScreen': 'EMBED',
         #                                   'hl': self.language}}}
 
-        payload = {'videoId': video_id,
-                   'context': {'client': {'clientVersion': '16.49', 'gl': self.region,
-                                          'clientName': 'ANDROID', 'hl': self.language}},
-                   'thirdParty': {'embedUrl': 'https://google.com'}
+        #payload = {'videoId': video_id,
+        #           'context': {'client': {'clientVersion': '16.49', 'gl': self.region,
+        #                                  'clientName': 'ANDROID', 'hl': self.language}},
+        #           'thirdParty': {'embedUrl': 'https://google.com'}
+        #}
+        
+        # 2023 Fix kodi 18 -leia
+        # https://github.com/anxdpanic/plugin.video.youtube/issues/442#issuecomment-1518477506
+        payload = {
+            'videoId': video_id,
+            'context': {
+                'client': {
+                    'hl': self.language,
+                    'gl': self.region,
+                    'clientName': 'TV_UNPLUGGED_ANDROID',
+                    'clientVersion': '1.37',
+                    'androidSdkVersion': 31,
+                    'osName': 'Android',
+                    'osVersion': '12',
+                    'platform': 'MOBILE'
+                }
+            }
         }
 
         player_response = {}
