@@ -45,8 +45,8 @@ jobs:
           echo "changes=$changes" >> $GITHUB_OUTPUT
         working-directory: ${{ github.event.repository.name }}
 
-      - name: Create Zip (Nexus)
-        id: zip-nexus
+      - name: Create Zip (Isengard)
+        id: zip-isengard
         run: |
           mv .git ..
           rm -rf .??*
@@ -59,8 +59,8 @@ jobs:
           echo "filename=$filename" >> $GITHUB_OUTPUT
         working-directory: ${{ github.event.repository.name }}
 
-      - name: Create Zip (Nexus-Unofficial)
-        id: zip-unofficial-nexus
+      - name: Create Zip (Isengard-Unofficial)
+        id: zip-unofficial-isengard
         run: |
           git reset
           git checkout .
@@ -69,6 +69,53 @@ jobs:
           mv .git ..
           rm -rf .??*
           rm *.md
+          version=$(xmlstarlet sel -t -v 'string(/addon/@version)' addon.xml)
+          filename=${{ github.event.repository.name }}-unofficial-${version}.zip
+          cd ..
+          zip -r $filename ${{ github.event.repository.name }}
+          mv .git ${{ github.event.repository.name }}
+          echo "filename=$filename" >> $GITHUB_OUTPUT
+        working-directory: ${{ github.event.repository.name }}
+
+      - name: Remove Repository
+        id: remove-repo
+        run: |
+          rm -rf ${{ github.event.repository.name }}
+
+      - name: Checkout Add-on
+        uses: actions/checkout@v3
+        with:
+          path: ${{ github.event.repository.name }}
+
+      - name: Create Zip (Matrix)
+        id: zip-matrix
+        run: |
+          git apply .patches/matrix.patch
+          mv .git ..
+          rm -rf .??*
+          rm *.md
+          version=$(xmlstarlet sel -t -v 'string(/addon/@version)' addon.xml)
+          xmlstarlet ed -L -u '/addon/@version' -v "${version}+matrix.1" addon.xml
+          version=$(xmlstarlet sel -t -v 'string(/addon/@version)' addon.xml)
+          filename=${{ github.event.repository.name }}-${version}.zip
+          cd ..
+          zip -r $filename ${{ github.event.repository.name }}
+          mv .git ${{ github.event.repository.name }}
+          echo "filename=$filename" >> $GITHUB_OUTPUT
+        working-directory: ${{ github.event.repository.name }}
+
+      - name: Create Zip (Matrix-Unofficial)
+        id: zip-unofficial-matrix
+        run: |
+          git reset
+          git checkout .
+          git clean -fdx
+          git apply .patches/matrix-unofficial.patch
+          mv .git ..
+          rm -rf .??*
+          rm *.md
+          version=$(xmlstarlet sel -t -v 'string(/addon/@version)' addon.xml)
+          xmlstarlet ed -L -u '/addon/@version' -v "${version}+matrix.1" addon.xml
           version=$(xmlstarlet sel -t -v 'string(/addon/@version)' addon.xml)
           filename=${{ github.event.repository.name }}-unofficial-${version}.zip
           cd ..
@@ -89,24 +136,46 @@ jobs:
           draft: false
           prerelease: ${{ steps.release.outputs.pre-release }}
 
-      - name: Upload Zip (Nexus)
-        id: upload-nexus
+      - name: Upload Zip (Isengard)
+        id: upload-isengard
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_name: ${{ steps.zip-nexus.outputs.filename }}
-          asset_path: ${{ steps.zip-nexus.outputs.filename }}
+          asset_name: ${{ steps.zip-isengard.outputs.filename }}
+          asset_path: ${{ steps.zip-isengard.outputs.filename }}
           asset_content_type: application/zip
 
-      - name: Upload Zip (Nexus-Unofficial)
-        id: upload-unofficial-nexus
+      - name: Upload Zip (Isengard-Unofficial)
+        id: upload-unofficial-isengard
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_name: ${{ steps.zip-unofficial-nexus.outputs.filename }}
-          asset_path: ${{ steps.zip-unofficial-nexus.outputs.filename }}
+          asset_name: ${{ steps.zip-unofficial-isengard.outputs.filename }}
+          asset_path: ${{ steps.zip-unofficial-isengard.outputs.filename }}
+          asset_content_type: application/zip
+
+      - name: Upload Zip (Matrix)
+        id: upload-matrix
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_name: ${{ steps.zip-matrix.outputs.filename }}
+          asset_path: ${{ steps.zip-matrix.outputs.filename }}
+          asset_content_type: application/zip
+
+      - name: Upload Zip (Matrix-Unofficial)
+        id: upload-unofficial-matrix
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_name: ${{ steps.zip-unofficial-matrix.outputs.filename }}
+          asset_path: ${{ steps.zip-unofficial-matrix.outputs.filename }}
           asset_content_type: application/zip
