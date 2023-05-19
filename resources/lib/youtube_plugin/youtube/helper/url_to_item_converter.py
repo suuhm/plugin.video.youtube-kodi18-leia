@@ -8,10 +8,9 @@
     See LICENSES/GPL-2.0-only for more information.
 """
 
-import re
-from urllib.parse import urlparse
-from urllib.parse import parse_qsl
+from six.moves import urllib
 
+import re
 from ...kodion.items import VideoItem, DirectoryItem
 from . import utils
 
@@ -35,9 +34,9 @@ class UrlToItemConverter(object):
         self._channel_ids = []
 
     def add_url(self, url, provider, context):
-        url_components = urlparse(url)
+        url_components = urllib.parse.urlparse(url)
         if url_components.hostname.lower() in ('youtube.com', 'www.youtube.com', 'm.youtube.com'):
-            params = dict(parse_qsl(url_components.query))
+            params = dict(urllib.parse.parse_qsl(url_components.query))
             if url_components.path.lower() == '/watch':
                 video_id = params.get('v', '')
                 if video_id:
